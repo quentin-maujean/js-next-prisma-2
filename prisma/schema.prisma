@@ -1,96 +1,14 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
-}
-
-model User {
-  id         String      @id @default(uuid())
-  bio        String?
-  email      String      @unique
-  image      String?
-  password   String
-  username   String      @unique
-  favorites  Favorites[]
-  followedBy Follows[]   @relation("following")
-  following  Follows[]   @relation("follower")
-  comments   Comment[]
-  articles   Article[]
-
-  @@map("user")
-}
-
-model Follows {
-  follower    User   @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
-  followerId  String @map("follower_id")
-  following   User   @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
-  followingId String @map("following_id")
-
-  @@id([followerId, followingId])
-  @@map("follows")
-}
-
 model Article {
-  id             String         @id @default(uuid())
-  slug           String         @unique
-  title          String
-  description    String
-  body           String
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
-  tagList        ArticlesTags[]
-  author         User           @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  authorId       String         @map("author_id")
-  favoritedBy    Favorites[]
-  comments       Comment[]
-  del            Boolean        @default(false)
-  favoritesCount Int            @default(0) @map("favorites_count")
-
-  @@map("article")
-}
-
-model Favorites {
-  favoriting  Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  articleId   String  @map("article_id")
-  favoritedBy User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String  @map("user_id")
-
-  @@id([articleId, userId])
-  @@map("favorites")
-}
-
-model Comment {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  body      String
-  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  articleId String   @map("article_id")
-  author    User     @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  authorId  String   @map("author_id")
-  del       Boolean  @default(false)
-
-  @@map("comment")
-}
-
-model ArticlesTags {
-  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  articleId String  @map("article_id")
-  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  tagId     String  @map("tag_id")
-
-  @@id([articleId, tagId])
-  @@map("articles_tags")
-}
-
-model Tag {
-  id       String         @id @default(uuid())
-  name     String         @unique
-  articles ArticlesTags[]
-
-  @@map("tag")
+  id             Int       @id @default(autoincrement()) @db.Integer
+  slug           String    @unique @db.VarChar(255)
+  title          String    @db.VarChar(255)
+  description    String    @db.Text
+  body           String    @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamp(0)
+  del            Boolean   @default(false) @map("del") @db.Boolean
+  favoritesCount Int       @default(0) @map("favorites_count") @db.Integer
+  
+  comments       Comment[] @relation("comment.article_id")
+  articlesTags   ArticlesTags[] @relation("articles_tags.article_id")
 }
